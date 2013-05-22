@@ -1,0 +1,49 @@
+<html>
+<head>
+	<title>TicTacToe - Mabbu9</title>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+	var socket = io.connect('http://localhost:8000');
+	socket.on('connect',function(){
+		document.getElementById('content').innerHTML = 'Connected!<br />';
+	});
+	socket.on('result',function(data){
+		document.getElementById(data.cell).innerHTML = data.cP;
+	});
+	socket.on('win',function(data){
+		document.getElementById('content').innerHTML = data;
+	});
+	function buttonClick(tag)
+	{
+		socket.emit('action',tag.id);
+		tag.onclick = '';
+	}
+	</script>
+</head>
+<body>
+<div id="container">
+	<div id="menu">
+	</div>
+	<div id="game">
+	<table>
+	<tr>
+		<td><button id="11" onclick="buttonClick(this);">11</button></td>
+		<td><button id="12" onclick="buttonClick(this);">12</button></td>
+		<td><button id="13" onclick="buttonClick(this);">13</button></td>
+	</tr>
+	<tr>
+		<td><button id="21" onclick="buttonClick(this);">21</button></td>
+		<td><button id="22" onclick="buttonClick(this);">22</button></td>
+		<td><button id="23" onclick="buttonClick(this);">23</button></td>
+	</tr>
+	<tr>
+		<td><button id="31" onclick="buttonClick(this);">31</button></td>
+		<td><button id="32" onclick="buttonClick(this);">32</button></td>
+		<td><button id="33" onclick="buttonClick(this);">33</button></td>
+	</tr>
+	</table>
+	<div id="content">Connecting to Socket Server.......</div>
+	</div>
+</div>
+</body>
+</html>
