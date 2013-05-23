@@ -20,23 +20,29 @@ function handler(req, res)
 	});
 }
 
+var Sockets = {};
+
 io.sockets.on('connection',function(socket){
 	console.log('socket created\n');
+	socket.on('login',function(data){
+		Sockets[data] = socket;
+		console.log(data+' connected with '+socket);
+		socket.emit('login',data);
+	});
 	var cP = 1;
-	var boardObj = board;
+	var boardObj = JSON.parse(JSON.stringify(board));
 	printBoard(boardObj);
 	socket.on('action',function(data){
 		cP = action(boardObj,cP,data.substr(0,1),data.substr(1,1));
 		socket.emit('result',{cell:data,cP:cP*(-1)});
 		var boardStatus = checkWin(boardObj);
-		if(boardStatus != null)
-		socket.emit('win',boardStatus);
+		if(boardStatus != '')
+			socket.emit('win',boardStatus);
 	});
 });
 
 
-//game(board); //starts the game
-
+//game(board); //starts the test game
 function game(boardObj)
 {
 	var currentPlayer = 1;
@@ -53,6 +59,7 @@ function game(boardObj)
 	//then change currentPlayer to opposite;
 }
 
+//action returns the next player
 function action(boardObj,currentPlayer,i,j)
 {
 	if(updateBoard(boardObj,currentPlayer,i,j))
@@ -67,6 +74,7 @@ function action(boardObj,currentPlayer,i,j)
 	return currentPlayer*(-1);
 }
 
+//prints the board on server console
 function printBoard(boardObj)
 {
 	for(var i=0;i<4;i++)
@@ -83,6 +91,7 @@ function printBoard(boardObj)
 	console.log('');
 }
 
+//checks the winning conditions each time
 function checkWin(boardObj)
 {
 	for(var i=0;i<4;i++)
@@ -101,6 +110,7 @@ function checkWin(boardObj)
 	return '';
 }
 
+//updates the board with either 1 or -1 and the sums
 function updateBoard(boardObj,inNum,i,j)
 {
 	if(boardObj[i][j] != 0) return false;

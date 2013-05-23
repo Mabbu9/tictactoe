@@ -5,26 +5,49 @@
 	<script>
 	var socket = io.connect('http://localhost:8000');
 	socket.on('connect',function(){
-		document.getElementById('content').innerHTML = 'Connected!<br />';
+		document.getElementById('statusMsg').innerHTML = 'Connected!<br />';
+		document.getElementById('login').style.display = 'block';
 	});
 	socket.on('result',function(data){
 		document.getElementById(data.cell).innerHTML = data.cP;
 	});
 	socket.on('win',function(data){
-		document.getElementById('content').innerHTML = data;
+		document.getElementById('statusMsg').innerHTML += data;
+		document.getElementById('game').style.display = 'none';
+	});
+	socket.on('login',function(data){
+		document.getElementById('login').style.display = 'none';
+		document.getElementById('statusMsg').innerHTML = 'Logged In As '+data+'<br />';
+		document.getElementById('game').style.display = 'block';
 	});
 	function buttonClick(tag)
 	{
 		socket.emit('action',tag.id);
 		tag.onclick = '';
 	}
+	function login()
+	{
+		var name = document.getElementById('name').value;
+		if(name == '') document.getElementById('statusMsg').innerHTML = 'Enter a Valid Name';
+		else
+		{
+			socket.emit('login',name);
+			document.getElementById('statusMsg').innerHTML = 'Logging In...';
+		}
+	}
 	</script>
 </head>
 <body>
 <div id="container">
+	<div id="statusMsg">Connecting to Socket Server.......
+	</div>
+	<div id="login" style="display:none;">
+	<input type="text" id="name" placeholder="Enter Your Name" /><br />
+	<button id="login" onclick="login()">Login</button>
+	</div>
 	<div id="menu">
 	</div>
-	<div id="game">
+	<div id="game" style="display:none;">
 	<table>
 	<tr>
 		<td><button id="11" onclick="buttonClick(this);">11</button></td>
@@ -42,8 +65,6 @@
 		<td><button id="33" onclick="buttonClick(this);">33</button></td>
 	</tr>
 	</table>
-	<div id="content">Connecting to Socket Server.......</div>
-	</div>
 </div>
 </body>
 </html>
