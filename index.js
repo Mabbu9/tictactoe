@@ -21,23 +21,71 @@ function handler(req, res)
 }
 
 var Sockets = {};
+var List = [];
+var Boards = {};
 
 io.sockets.on('connection',function(socket){
 	console.log('socket created\n');
 	socket.on('login',function(data){
 		Sockets[data] = socket;
+		var presentFlag = false;
+		for(var i in List)
+		{
+			if(List[i] == data)
+			{
+				presentFlag = true;
+				break;
+			}
+			
+		}
+		if(!presentFlag) List.push(data);
 		console.log(data+' connected with '+socket);
 		socket.emit('login',data);
-	});
-	var cP = 1;
-	var boardObj = JSON.parse(JSON.stringify(board));
-	printBoard(boardObj);
-	socket.on('action',function(data){
-		cP = action(boardObj,cP,data.substr(0,1),data.substr(1,1));
-		socket.emit('result',{cell:data,cP:cP*(-1)});
-		var boardStatus = checkWin(boardObj);
-		if(boardStatus != '')
-			socket.emit('win',boardStatus);
+		
+		socket.on('list',function(){
+			socket.emit('list',List);
+		});
+		
+		socket.on('play',function(data){
+			//var cP = 1;
+			//var boardObj = JSON.parse(JSON.stringify(board));
+			var me = data.me;
+			var opp = data.opponent;
+			if(Boards[me]==undefined) Boards[me] = {};
+			if(Boards[me][opp] == undefined || Boards[me][opp] == null)
+			{
+				Boards[me][opp] = {};
+				Boards[me][opp]['board'] = JSON.parse(JSON.stringify(board));
+				Boards[me][opp]['cP'] = 1;
+			}
+			var toSend = {};
+			toSend.positive = me;
+			toSend.negative = opp;
+			toSend.cP = Boards[me][opp]['cP'];
+			toSend.board = Boards[me][opp]['board'];
+			Sockets[opp].emit('play',toSend);
+			Sockets[me].emit('play',toSend);
+			//printBoard(boardObj);
+		});
+		socket.on('action',function(data){
+			var boardObj = Boards[data.positive][data.negative].board;
+			var cP = Boards[data.positive][data.negative].cP;
+			cP = action(boardObj,cP,data.cell.substr(0,1),data.cell.substr(1,1));
+			Boards[data.positive][data.negative].cP = cP;
+			Sockets[data.positive].emit('result',{cell:data.cell,cP:cP*(-1)});
+			Sockets[data.negative].emit('result',{cell:data.cell,cP:cP*(-1)});
+			var boardStatus = checkWin(boardObj);
+			if(boardStatus != '')
+			{
+				var winner = data[boardStatus];
+				Sockets[data.positive].emit('win',winner);
+				Sockets[data.negative].emit('win',winner);
+				Boards[data.positive][data.negative]==null;
+			}
+		});
+		/*
+
+		*/
 	});
 });
 
@@ -99,12 +147,12 @@ function checkWin(boardObj)
 		if(boardObj[0][i] == 3 || boardObj[i][0]==3 || boardObj[0][4] == 3)
 		{
 			console.log('Positive Wins!');
-			return 'Positive Wins!';
+			return 'positive';
 		}
 		else if(boardObj[0][i] == -3 || boardObj[i][0]==-3 || boardObj[0][4] == -3)
 		{
 			console.log('Negative Wins!');
-			return 'Negative Wins!';
+			return 'negative';
 		}
 	}
 	return '';

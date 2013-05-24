@@ -5,35 +5,117 @@
 	<script>
 	var socket = io.connect('http://localhost:8000');
 	socket.on('connect',function(){
+		console.log('Connect Event Triggered');
 		document.getElementById('statusMsg').innerHTML = 'Connected!<br />';
+		console.log('statusMsg Updated to Connected');
 		document.getElementById('login').style.display = 'block';
+		document.getElementById('game').style.display = 'none';
+		document.getElementById('list').style.display = 'none';
+		console.log('login div visible');
 	});
 	socket.on('result',function(data){
+		console.log('result event triggered');
 		document.getElementById(data.cell).innerHTML = data.cP;
+		document.getElementById(data.cell).onclick = '';
+		cP = data.cP*(-1);
+		if((cP == 1 && name == positive) || (cP==-1&&name==negative))
+		{
+			document.getElementById('statusMsg').innerHTML = 'Its Your Turn!';
+		}
+		else
+		{
+			document.getElementById('statusMsg').innerHTML = 'Waiting For Opponent...';
+		}
 	});
 	socket.on('win',function(data){
-		document.getElementById('statusMsg').innerHTML += data;
+		console.log('win event triggered');
+		document.getElementById('statusMsg').innerHTML = 'The Winner is : '+data;
 		document.getElementById('game').style.display = 'none';
 	});
 	socket.on('login',function(data){
+		console.log('login event triggered');
 		document.getElementById('login').style.display = 'none';
 		document.getElementById('statusMsg').innerHTML = 'Logged In As '+data+'<br />';
-		document.getElementById('game').style.display = 'block';
+		document.getElementById('list').style.display = 'block';
 	});
+	socket.on('list',function(data){
+		console.log('list event triggered');
+		var playerListHTML = '';
+		for(var i in data)
+		{
+			if(data[i]!=name)
+				playerListHTML += '<button onclick="play(this)">'+data[i]+'</button><br />';
+		}
+		document.getElementById('playerList').innerHTML = playerListHTML;
+	});
+	socket.on('play',function(data){
+		console.log('play event triggered');
+		document.getElementById('game').style.display = 'block';
+		positive = data.positive;
+		negative = data.negative;
+		cP = data.cP;
+		setBoard(data.board);
+	});
+	var name;
+	var positive;
+	var negative;
+	var cP;
 	function buttonClick(tag)
 	{
-		socket.emit('action',tag.id);
-		tag.onclick = '';
+		console.log('buttonClick function invoked');
+		if((cP == 1 && name == positive) || (cP==-1&&name==negative))
+		{
+			if(tag.innerHTML != '0')
+			{
+				document.getElementById('statusMsg').innerHTML = 'Invalid Selection';
+				return;
+			}
+			var toSend = {};
+			toSend.cell = tag.id;
+			toSend.positive = positive;
+			toSend.negative = negative;
+			socket.emit('action',toSend);
+			//tag.onclick = '';
+			document.getElementById('statusMsg').innerHTML = 'Waiting For Other Player...';
+		}
+		else
+		{
+			document.getElementById('statusMsg').innerHTML = 'Its the Other Players Turn!';
+		}
 	}
 	function login()
 	{
-		var name = document.getElementById('name').value;
+		console.log('login function invoked');
+		name = document.getElementById('name').value;
 		if(name == '') document.getElementById('statusMsg').innerHTML = 'Enter a Valid Name';
 		else
 		{
 			socket.emit('login',name);
 			document.getElementById('statusMsg').innerHTML = 'Logging In...';
 		}
+	}
+	function getList()
+	{
+		console.log('getList function invoked');
+		socket.emit('list');
+	}
+	function play(tag)
+	{
+		console.log('play function invoked');
+		var toSend = {};
+		toSend.me = name;
+		toSend.opponent = tag.innerHTML;
+		socket.emit('play',toSend);
+	}
+	function setBoard(board)
+	{
+		console.log('setBoard function invoked');
+		for(var i = 1;i<4;i++)
+			for(var j = 1;j<4;j++)
+			{
+				document.getElementById(i.toString()+j.toString()).innerHTML = board[i][j];
+				//document.getElementById(i.toString()+j.toString()).onclick = 'buttonClick(this);'
+			}
 	}
 	</script>
 </head>
@@ -42,29 +124,32 @@
 	<div id="statusMsg">Connecting to Socket Server.......
 	</div>
 	<div id="login" style="display:none;">
-	<input type="text" id="name" placeholder="Enter Your Name" /><br />
-	<button id="login" onclick="login()">Login</button>
-	</div>
-	<div id="menu">
+		<input type="text" id="name" placeholder="Enter Your Name" /><br />
+		<button id="loginButton" onclick="login()">Login</button>
 	</div>
 	<div id="game" style="display:none;">
-	<table>
-	<tr>
-		<td><button id="11" onclick="buttonClick(this);">11</button></td>
-		<td><button id="12" onclick="buttonClick(this);">12</button></td>
-		<td><button id="13" onclick="buttonClick(this);">13</button></td>
-	</tr>
-	<tr>
-		<td><button id="21" onclick="buttonClick(this);">21</button></td>
-		<td><button id="22" onclick="buttonClick(this);">22</button></td>
-		<td><button id="23" onclick="buttonClick(this);">23</button></td>
-	</tr>
-	<tr>
-		<td><button id="31" onclick="buttonClick(this);">31</button></td>
-		<td><button id="32" onclick="buttonClick(this);">32</button></td>
-		<td><button id="33" onclick="buttonClick(this);">33</button></td>
-	</tr>
-	</table>
+		<table>
+		<tr>
+			<td><button id="11" onclick="buttonClick(this);">11</button></td>
+			<td><button id="12" onclick="buttonClick(this);">12</button></td>
+			<td><button id="13" onclick="buttonClick(this);">13</button></td>
+		</tr>
+		<tr>
+			<td><button id="21" onclick="buttonClick(this);">21</button></td>
+			<td><button id="22" onclick="buttonClick(this);">22</button></td>
+			<td><button id="23" onclick="buttonClick(this);">23</button></td>
+		</tr>
+		<tr>
+			<td><button id="31" onclick="buttonClick(this);">31</button></td>
+			<td><button id="32" onclick="buttonClick(this);">32</button></td>
+			<td><button id="33" onclick="buttonClick(this);">33</button></td>
+		</tr>
+		</table>
+	</div>
+	<div id="list" style="display:none;">
+		<button id="listButton" onclick="getList()">Get List Of Players</button>
+		<div id="playerList"></div>
+	</div>
 </div>
 </body>
 </html>
