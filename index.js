@@ -72,8 +72,13 @@ io.sockets.on('connection',function(socket){
 			var cP = Boards[data.positive][data.negative].cP;
 			cP = action(boardObj,cP,data.cell.substr(0,1),data.cell.substr(1,1));
 			Boards[data.positive][data.negative].cP = cP;
-			Sockets[data.positive].emit('result',{cell:data.cell,cP:cP*(-1)});
-			Sockets[data.negative].emit('result',{cell:data.cell,cP:cP*(-1)});
+			var toSend = {};
+			toSend.cell = data.cell;
+			toSend.cP = cP*(-1);
+			toSend.positive = data.positive;
+			toSend.negative = data.negative;
+			Sockets[data.positive].emit('result',toSend);
+			Sockets[data.negative].emit('result',toSend);
 			var boardStatus = checkWin(boardObj);
 			if(boardStatus != '')
 			{

@@ -15,16 +15,19 @@
 	});
 	socket.on('result',function(data){
 		console.log('result event triggered');
-		document.getElementById(data.cell).innerHTML = data.cP;
-		document.getElementById(data.cell).onclick = '';
-		cP = data.cP*(-1);
-		if((cP == 1 && name == positive) || (cP==-1&&name==negative))
+		if(data.positive == positive && data.negative == negative)
 		{
-			document.getElementById('statusMsg').innerHTML = 'Its Your Turn!';
-		}
-		else
-		{
-			document.getElementById('statusMsg').innerHTML = 'Waiting For Opponent...';
+			document.getElementById(data.cell).innerHTML = data.cP;
+			//document.getElementById(data.cell).onclick = '';
+			cP = data.cP*(-1);
+			if((cP == 1 && name == positive) || (cP==-1&&name==negative))
+			{
+				document.getElementById('statusMsg').innerHTML = 'Its Your Turn!';
+			}
+			else
+			{
+				document.getElementById('statusMsg').innerHTML = 'Waiting For Opponent...';
+			}
 		}
 	});
 	socket.on('win',function(data){
