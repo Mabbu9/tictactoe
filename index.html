@@ -29,6 +29,14 @@
 				document.getElementById('statusMsg').innerHTML = 'Waiting For Opponent...';
 			}
 		}
+		else if(data.positive!=name)
+		{
+			document.getElementById(data.positive+'-status').innerHTML = 'Your Turn! Click Here to Continue';
+		}
+		else if(data.negative!=name)
+		{
+			document.getElementById(data.negative+'-status').innerHTML = 'Your Turn! Click Here to Continue';
+		}
 	});
 	socket.on('win',function(data){
 		console.log('win event triggered');
@@ -47,7 +55,7 @@
 		for(var i in data)
 		{
 			if(data[i]!=name)
-				playerListHTML += '<button onclick="play(this)">'+data[i]+'</button><br />';
+				playerListHTML += '<button onclick="play(this)">'+data[i]+'</button><div id="'+data[i]+'-status"></div><br />';
 		}
 		document.getElementById('playerList').innerHTML = playerListHTML;
 	});

@@ -8,6 +8,10 @@ var app = http.createServer(handler);
 var io = socketio.listen(app);
 app.listen(8000);
 
+//var app2 = http.createServer(handler);
+//var io = socketio.listen(app2);
+//app2.listen(8080);
+
 function handler(req, res)
 {
 	fs.readFile(__dirname+'/index.html',function(err, data){
@@ -85,7 +89,7 @@ io.sockets.on('connection',function(socket){
 				var winner = data[boardStatus];
 				Sockets[data.positive].emit('win',winner);
 				Sockets[data.negative].emit('win',winner);
-				Boards[data.positive][data.negative]==null;
+				Boards[data.positive][data.negative]=null;
 			}
 		});
 		/*
