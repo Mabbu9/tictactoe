@@ -3,18 +3,23 @@ var board = require('./board.json');
 var http = require('http');
 var socketio = require('socket.io');
 var fs = require('fs');
+var express = require('express');
 
 var app = http.createServer(handler);
 var io = socketio.listen(app);
 app.listen(8000);
 
-//var app2 = http.createServer(handler);
-//var io = socketio.listen(app2);
-//app2.listen(8080);
-
+var filePort = (process.env.OPENSHIFT_INTERNAL_PORT || 8080);
+var app2 = express();
+//app2.get("/",handler);
+app2.post("/",handler);
+app2.configure(function(){
+	app2.use('/',express.static(__dirname+'/public'));
+});
+app2.listen(filePort);
 function handler(req, res)
 {
-	fs.readFile(__dirname+'/index.html',function(err, data){
+	fs.readFile(__dirname+'/public/index.html',function(err, data){
 		if (err) {
 			res.writeHead(500);
 			return res.end('Error loading index.html');
