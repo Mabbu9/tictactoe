@@ -73,7 +73,7 @@
 	socket.on('play',function(data){
 		console.log('play event triggered');
 		document.getElementById('game').style.display = 'block';
-		document.getElementById('list').style.display = 'none';
+		//document.getElementById('list').style.display = 'none';
 		positive = data.positive;
 		negative = data.negative;
 		cP = data.cP;
@@ -141,11 +141,15 @@
 				//document.getElementById(i.toString()+j.toString()).innerHTML = board[i][j];
 				if(board[i][j] == 1)
 				{
-				document.getElementById(data.cell).style.background = 'url(../images/x.png)';
+				document.getElementById(i.toString()+j.toString()).style.background = 'url(../images/x.png)';
 				}
 				else if(board[i][j] == -1)
 				{
-				document.getElementById(data.cell).style.background = 'url(../images/o.png)';
+				document.getElementById(i.toString()+j.toString()).style.background = 'url(../images/o.png)';
+				}
+				else
+				{
+				document.getElementById(i.toString()+j.toString()).style.background = '';
 				}
 				//document.getElementById(i.toString()+j.toString()).onclick = 'buttonClick(this);'
 			}
@@ -185,7 +189,7 @@
 	</div>
 	<div id="list" style="display:none;">
 		<!--<button id="randomButton" onclick="getRandom()">Play a Random Game</button><br />-->
-		<!--<button id="listButton" onclick="getList()">Get List Of Players</button><br />-->
+		<button id="listButton" onclick="getList()">Get List Of Players</button><br />
 		<h2 style="color:white;font-family:'Comic Sans MS'">List Of Players Online:</h2>
 		<div id="playerList"></div>
 	</div>
