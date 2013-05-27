@@ -5,9 +5,9 @@ var socketio = require('socket.io');
 var fs = require('fs');
 var express = require('express');
 
-var app = http.createServer(handler);
-var io = socketio.listen(app);
-app.listen(8000);
+//var app = http.createServer(handler);
+//var io = socketio.listen(app);
+//app.listen(8000);
 
 var filePort = (process.env.OPENSHIFT_INTERNAL_PORT || 8080);
 var app2 = express();
@@ -16,6 +16,7 @@ app2.post("/",handler);
 app2.configure(function(){
 	app2.use('/',express.static(__dirname+'/public'));
 });
+var io = socketio.listen(app2);
 app2.listen(filePort);
 function handler(req, res)
 {
