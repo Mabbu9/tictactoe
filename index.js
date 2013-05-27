@@ -61,17 +61,29 @@ io.sockets.on('connection',function(socket){
 			var me = data.me;
 			var opp = data.opponent;
 			if(Boards[me]==undefined) Boards[me] = {};
-			if(Boards[me][opp] == undefined || Boards[me][opp] == null)
+			if(Boards[opp]==undefined) Boards[opp] = {};
+			if(Boards[opp][me]!=undefined || Boards[opp][me]!=null)
 			{
-				Boards[me][opp] = {};
-				Boards[me][opp]['board'] = JSON.parse(JSON.stringify(board));
-				Boards[me][opp]['cP'] = 1;
+				var toSend = {};
+				toSend.positive = opp;
+				toSend.negative = me;
+				toSend.cP = Boards[opp][me]['cP'];
+				toSend.board = Boards[opp][me]['board'];
 			}
-			var toSend = {};
-			toSend.positive = me;
-			toSend.negative = opp;
-			toSend.cP = Boards[me][opp]['cP'];
-			toSend.board = Boards[me][opp]['board'];
+			else
+			{
+				if(Boards[me][opp] == undefined || Boards[me][opp] == null)
+				{
+					Boards[me][opp] = {};
+					Boards[me][opp]['board'] = JSON.parse(JSON.stringify(board));
+					Boards[me][opp]['cP'] = 1;
+				}
+				var toSend = {};
+				toSend.positive = me;
+				toSend.negative = opp;
+				toSend.cP = Boards[me][opp]['cP'];
+				toSend.board = Boards[me][opp]['board'];
+			}
 			Sockets[opp].emit('play',toSend);
 			Sockets[me].emit('play',toSend);
 			//printBoard(boardObj);
