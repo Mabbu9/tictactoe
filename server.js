@@ -1,177 +1,197 @@
-#!/bin/env node
-//  OpenShift sample Node application
+var board = require('./board.json');
+
+var http = require('http');
+var socketio = require('socket.io');
+var fs = require('fs');
 var express = require('express');
-var fs      = require('fs');
+
+var app = http.createServer(handler);
+var io = socketio.listen(app);
+app.listen(8000);
+
+var filePort = (process.env.OPENSHIFT_INTERNAL_PORT || 8080);
+var app2 = express();
+//app2.get("/",handler);
+app2.post("/",handler);
+app2.configure(function(){
+	app2.use('/',express.static(__dirname+'/public'));
+});
+app2.listen(filePort);
+function handler(req, res)
+{
+	fs.readFile(__dirname+'/public/index.html',function(err, data){
+		if (err) {
+			res.writeHead(500);
+			return res.end('Error loading index.html');
+		}
+		res.writeHead(200);
+		res.end(data);
+	});
+}
+
+var Sockets = {};
+var List = [];
+var Boards = {};
+
+io.sockets.on('connection',function(socket){
+	console.log('socket created\n');
+	socket.on('login',function(data){
+		Sockets[data] = socket;
+		var presentFlag = false;
+		for(var i in List)
+		{
+			if(List[i] == data)
+			{
+				presentFlag = true;
+				break;
+			}
+			
+		}
+		if(!presentFlag) List.push(data);
+		console.log(data+' connected with '+socket);
+		socket.emit('login',data);
+		
+		socket.on('list',function(){
+			socket.emit('list',List);
+		});
+		
+		socket.on('play',function(data){
+			//var cP = 1;
+			//var boardObj = JSON.parse(JSON.stringify(board));
+			var me = data.me;
+			var opp = data.opponent;
+			if(Boards[me]==undefined) Boards[me] = {};
+			if(Boards[opp]==undefined) Boards[opp] = {};
+			if(Boards[opp][me]!=undefined || Boards[opp][me]!=null)
+			{
+				var toSend = {};
+				toSend.positive = opp;
+				toSend.negative = me;
+				toSend.cP = Boards[opp][me]['cP'];
+				toSend.board = Boards[opp][me]['board'];
+			}
+			else
+			{
+				if(Boards[me][opp] == undefined || Boards[me][opp] == null)
+				{
+					Boards[me][opp] = {};
+					Boards[me][opp]['board'] = JSON.parse(JSON.stringify(board));
+					Boards[me][opp]['cP'] = 1;
+				}
+				var toSend = {};
+				toSend.positive = me;
+				toSend.negative = opp;
+				toSend.cP = Boards[me][opp]['cP'];
+				toSend.board = Boards[me][opp]['board'];
+			}
+			Sockets[opp].emit('play',toSend);
+			Sockets[me].emit('play',toSend);
+			//printBoard(boardObj);
+		});
+		socket.on('action',function(data){
+			var boardObj = Boards[data.positive][data.negative].board;
+			var cP = Boards[data.positive][data.negative].cP;
+			cP = action(boardObj,cP,data.cell.substr(0,1),data.cell.substr(1,1));
+			Boards[data.positive][data.negative].cP = cP;
+			var toSend = {};
+			toSend.cell = data.cell;
+			toSend.cP = cP*(-1);
+			toSend.positive = data.positive;
+			toSend.negative = data.negative;
+			Sockets[data.positive].emit('result',toSend);
+			Sockets[data.negative].emit('result',toSend);
+			var boardStatus = checkWin(boardObj);
+			if(boardStatus != '')
+			{
+				var winner = data[boardStatus];
+				Sockets[data.positive].emit('win',winner);
+				Sockets[data.negative].emit('win',winner);
+				Boards[data.positive][data.negative]=null;
+			}
+		});
+		/*
+
+		*/
+	});
+});
 
 
-/**
- *  Define the sample application.
- */
-var SampleApp = function() {
+//game(board); //starts the test game
+function game(boardObj)
+{
+	var currentPlayer = 1;
+	
+	printBoard(boardObj);
+	//input should be taken here, sample input given below
+	currentPlayer = action(boardObj,currentPlayer,2,2);
+	currentPlayer = action(boardObj,currentPlayer,2,3);
+	currentPlayer = action(boardObj,currentPlayer,1,2);
+	currentPlayer = action(boardObj,currentPlayer,3,3);
+	currentPlayer = action(boardObj,currentPlayer,1,1);
+	currentPlayer = action(boardObj,currentPlayer,1,3);
+	//updateBoard(boardObj,currentPlayer,i,j);
+	//then change currentPlayer to opposite;
+}
 
-    //  Scope.
-    var self = this;
+//action returns the next player
+function action(boardObj,currentPlayer,i,j)
+{
+	if(updateBoard(boardObj,currentPlayer,i,j))
+		console.log('updated');
+	else
+	{
+		console.log('invalid option');
+		return currentPlayer;
+	}
+	printBoard(boardObj);
+	checkWin(boardObj);
+	return currentPlayer*(-1);
+}
 
+//prints the board on server console
+function printBoard(boardObj)
+{
+	for(var i=0;i<4;i++)
+	{
+		var toPrint = '';
+		for(var j=0;j<=4;j++)
+		{
+			var cell = boardObj[i][j];
+			if(cell == undefined) cell='';
+			toPrint = toPrint + cell +'\t';
+		}
+		console.log(toPrint);
+	}
+	console.log('');
+}
 
-    /*  ================================================================  */
-    /*  Helper functions.                                                 */
-    /*  ================================================================  */
+//checks the winning conditions each time
+function checkWin(boardObj)
+{
+	for(var i=0;i<4;i++)
+	{
+		if(boardObj[0][i] == 3 || boardObj[i][0]==3 || boardObj[0][4] == 3)
+		{
+			console.log('Positive Wins!');
+			return 'positive';
+		}
+		else if(boardObj[0][i] == -3 || boardObj[i][0]==-3 || boardObj[0][4] == -3)
+		{
+			console.log('Negative Wins!');
+			return 'negative';
+		}
+	}
+	return '';
+}
 
-    /**
-     *  Set up server IP address and port # using env variables/defaults.
-     */
-    self.setupVariables = function() {
-        //  Set the environment variables we need.
-        self.ipaddress = process.env.OPENSHIFT_INTERNAL_IP;
-        self.port      = process.env.OPENSHIFT_INTERNAL_PORT || 8080;
-
-        if (typeof self.ipaddress === "undefined") {
-            //  Log errors on OpenShift but continue w/ 127.0.0.1 - this
-            //  allows us to run/test the app locally.
-            console.warn('No OPENSHIFT_INTERNAL_IP var, using 127.0.0.1');
-            self.ipaddress = "127.0.0.1";
-        };
-    };
-
-
-    /**
-     *  Populate the cache.
-     */
-    self.populateCache = function() {
-        if (typeof self.zcache === "undefined") {
-            self.zcache = { 'index.html': '' };
-        }
-
-        //  Local cache for static content.
-        self.zcache['index.html'] = fs.readFileSync('./index.html');
-    };
-
-
-    /**
-     *  Retrieve entry (content) from cache.
-     *  @param {string} key  Key identifying content to retrieve from cache.
-     */
-    self.cache_get = function(key) { return self.zcache[key]; };
-
-
-    /**
-     *  terminator === the termination handler
-     *  Terminate server on receipt of the specified signal.
-     *  @param {string} sig  Signal to terminate on.
-     */
-    self.terminator = function(sig){
-        if (typeof sig === "string") {
-           console.log('%s: Received %s - terminating sample app ...',
-                       Date(Date.now()), sig);
-           process.exit(1);
-        }
-        console.log('%s: Node server stopped.', Date(Date.now()) );
-    };
-
-
-    /**
-     *  Setup termination handlers (for exit and a list of signals).
-     */
-    self.setupTerminationHandlers = function(){
-        //  Process on exit and signals.
-        process.on('exit', function() { self.terminator(); });
-
-        // Removed 'SIGPIPE' from the list - bugz 852598.
-        ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-         'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
-        ].forEach(function(element, index, array) {
-            process.on(element, function() { self.terminator(element); });
-        });
-    };
-
-
-    /*  ================================================================  */
-    /*  App server functions (main app logic here).                       */
-    /*  ================================================================  */
-
-    /**
-     *  Create the routing table entries + handlers for the application.
-     */
-    self.createRoutes = function() {
-        self.routes = { };
-
-        // Routes for /health, /asciimo, /env and /
-        self.routes['/health'] = function(req, res) {
-            res.send('1');
-        };
-
-        self.routes['/asciimo'] = function(req, res) {
-            var link = "http://i.imgur.com/kmbjB.png";
-            res.send("<html><body><img src='" + link + "'></body></html>");
-        };
-
-        self.routes['/env'] = function(req, res) {
-            var content = 'Version: ' + process.version + '\n<br/>\n' +
-                          'Env: {<br/>\n<pre>';
-            //  Add env entries.
-            for (var k in process.env) {
-               content += '   ' + k + ': ' + process.env[k] + '\n';
-            }
-            content += '}\n</pre><br/>\n'
-            res.send('<html>\n' +
-                     '  <head><title>Node.js Process Env</title></head>\n' +
-                     '  <body>\n<br/>\n' + content + '</body>\n</html>');
-        };
-
-        self.routes['/'] = function(req, res) {
-            res.set('Content-Type', 'text/html');
-            res.send(self.cache_get('index.html') );
-        };
-    };
-
-
-    /**
-     *  Initialize the server (express) and create the routes and register
-     *  the handlers.
-     */
-    self.initializeServer = function() {
-        self.createRoutes();
-        self.app = express();
-
-        //  Add handlers for the app (from the routes).
-        for (var r in self.routes) {
-            self.app.get(r, self.routes[r]);
-        }
-    };
-
-
-    /**
-     *  Initializes the sample application.
-     */
-    self.initialize = function() {
-        self.setupVariables();
-        self.populateCache();
-        self.setupTerminationHandlers();
-
-        // Create the express server and routes.
-        self.initializeServer();
-    };
-
-
-    /**
-     *  Start the server (starts up the sample application).
-     */
-    self.start = function() {
-        //  Start the app on the specific interface (and port).
-        self.app.listen(self.port, self.ipaddress, function() {
-            console.log('%s: Node server started on %s:%d ...',
-                        Date(Date.now() ), self.ipaddress, self.port);
-        });
-    };
-
-};   /*  Sample Application.  */
-
-
-
-/**
- *  main():  Main code.
- */
-var zapp = new SampleApp();
-zapp.initialize();
-zapp.start();
-
+//updates the board with either 1 or -1 and the sums
+function updateBoard(boardObj,inNum,i,j)
+{
+	if(boardObj[i][j] != 0) return false;
+	boardObj[i][j] = inNum;
+	boardObj[i][0] = boardObj[i][0]+inNum;
+	boardObj[0][j] = boardObj[0][j]+inNum;
+	if(i+j==4) boardObj[0][4] = boardObj[0][4] + inNum;
+	if(i==j) boardObj[0][0] = boardObj[0][0] + inNum;
+	return true;
+}
