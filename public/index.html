@@ -1,12 +1,13 @@
 <html>
 <head>
 	<title>TicTacToe - Mabbu9</title>
-	<script src="/socket.io/socket.io.js"></script>
+	<script src="http://localhost:8000/socket.io/socket.io.js"></script>
+	<link rel="stylesheet" type="text/css" href="./css/style.css">
 	<script>
 	var socket = io.connect('http://localhost:8000');
 	socket.on('connect',function(){
 		console.log('Connect Event Triggered');
-		document.getElementById('statusMsg').innerHTML = 'Connected!<br />';
+		document.getElementById('loading').style.display = 'none';
 		console.log('statusMsg Updated to Connected');
 		document.getElementById('login').style.display = 'block';
 		document.getElementById('game').style.display = 'none';
@@ -17,7 +18,15 @@
 		console.log('result event triggered');
 		if(data.positive == positive && data.negative == negative)
 		{
-			document.getElementById(data.cell).innerHTML = data.cP;
+			//document.getElementById(data.cell).innerHTML = data.cP;
+			if(data.cP == 1)
+			{
+				document.getElementById(data.cell).style.background = 'url(../images/x.png)';
+			}
+			else
+			{
+				document.getElementById(data.cell).style.background = 'url(../images/o.png)';
+			}
 			//document.getElementById(data.cell).onclick = '';
 			cP = data.cP*(-1);
 			if((cP == 1 && name == positive) || (cP==-1&&name==negative))
@@ -46,8 +55,10 @@
 	socket.on('login',function(data){
 		console.log('login event triggered');
 		document.getElementById('login').style.display = 'none';
+		document.getElementById('loading').style.display = 'none';
 		document.getElementById('statusMsg').innerHTML = 'Logged In As '+data+'<br />';
 		document.getElementById('list').style.display = 'block';
+		getList();
 	});
 	socket.on('list',function(data){
 		console.log('list event triggered');
@@ -62,6 +73,7 @@
 	socket.on('play',function(data){
 		console.log('play event triggered');
 		document.getElementById('game').style.display = 'block';
+		document.getElementById('list').style.display = 'none';
 		positive = data.positive;
 		negative = data.negative;
 		cP = data.cP;
@@ -76,7 +88,7 @@
 		console.log('buttonClick function invoked');
 		if((cP == 1 && name == positive) || (cP==-1&&name==negative))
 		{
-			if(tag.innerHTML != '0')
+			if(tag.style.background != '')
 			{
 				document.getElementById('statusMsg').innerHTML = 'Invalid Selection';
 				return;
@@ -102,7 +114,9 @@
 		else
 		{
 			socket.emit('login',name);
-			document.getElementById('statusMsg').innerHTML = 'Logging In...';
+			document.getElementById('statusMsg').innerHTML = '';
+			document.getElementById('loadingStatus').innerHTML = 'Logging in ...';
+			document.getElementById('loading').style.display = 'block';
 		}
 	}
 	function getList()
@@ -124,7 +138,15 @@
 		for(var i = 1;i<4;i++)
 			for(var j = 1;j<4;j++)
 			{
-				document.getElementById(i.toString()+j.toString()).innerHTML = board[i][j];
+				//document.getElementById(i.toString()+j.toString()).innerHTML = board[i][j];
+				if(board[i][j] == 1)
+				{
+				document.getElementById(data.cell).style.background = 'url(../images/x.png)';
+				}
+				else if(board[i][j] == -1)
+				{
+				document.getElementById(data.cell).style.background = 'url(../images/o.png)';
+				}
 				//document.getElementById(i.toString()+j.toString()).onclick = 'buttonClick(this);'
 			}
 	}
@@ -132,34 +154,39 @@
 </head>
 <body>
 <div id="container">
-	<div id="statusMsg">Connecting to Socket Server.......
+	<h1 style="color:white;text-align:center;font-family:'Comic Sans MS'">TicTacToe</h1>
+	<div id ="statusMsg"></div>
+	<div id="loading"><div id = "loadingStatus">Loading...</div>
+	<img src="./images/loading.gif"></img>
 	</div>
 	<div id="login" style="display:none;">
 		<input type="text" id="name" placeholder="Enter Your Name" /><br />
 		<button id="loginButton" onclick="login()">Login</button>
 	</div>
+	
 	<div id="game" style="display:none;">
-		<table>
+		<table style="width:inheit">
 		<tr>
-			<td><button id="11" onclick="buttonClick(this);">11</button></td>
-			<td><button id="12" onclick="buttonClick(this);">12</button></td>
-			<td><button id="13" onclick="buttonClick(this);">13</button></td>
+			<td><div class="cell" id="11" onclick="buttonClick(this);"></div></td>
+			<td><div class="cell" id="12" onclick="buttonClick(this);"></div></td>
+			<td><div class="cell" id="13" onclick="buttonClick(this);"></button></td>
 		</tr>
 		<tr>
-			<td><button id="21" onclick="buttonClick(this);">21</button></td>
-			<td><button id="22" onclick="buttonClick(this);">22</button></td>
-			<td><button id="23" onclick="buttonClick(this);">23</button></td>
+			<td><div class="cell" id="21" onclick="buttonClick(this);"></div></td>
+			<td><div class="cell" id="22" onclick="buttonClick(this);"></div></td>
+			<td><div class="cell" id="23" onclick="buttonClick(this);"></div></td>
 		</tr>
 		<tr>
-			<td><button id="31" onclick="buttonClick(this);">31</button></td>
-			<td><button id="32" onclick="buttonClick(this);">32</button></td>
-			<td><button id="33" onclick="buttonClick(this);">33</button></td>
+			<td><div class="cell" id="31" onclick="buttonClick(this);"></div></td>
+			<td><div class="cell" id="32" onclick="buttonClick(this);"></div></td>
+			<td><div class="cell" id="33" onclick="buttonClick(this);"></div></td>
 		</tr>
 		</table>
 	</div>
 	<div id="list" style="display:none;">
 		<!--<button id="randomButton" onclick="getRandom()">Play a Random Game</button><br />-->
-		<button id="listButton" onclick="getList()">Get List Of Players</button><br />
+		<!--<button id="listButton" onclick="getList()">Get List Of Players</button><br />-->
+		<h2 style="color:white;font-family:'Comic Sans MS'">List Of Players Online:</h2>
 		<div id="playerList"></div>
 	</div>
 </div>

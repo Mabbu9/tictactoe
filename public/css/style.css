@@ -1,0 +1,24 @@
+body
+{
+	background: url('../images/pattern.png');
+}
+#loading
+{
+	width: 230px;
+	text-align: center;
+	margin: 250 auto;
+}
+#game
+{
+	background: url('../images/game-bk.png');
+	display: block;
+	margin: auto;
+	width: 300px;
+	height: 300px;
+	border: 1px dashed #014472;
+}
+.cell
+{
+	height : 100;
+	width :100;
+}
