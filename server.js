@@ -9,9 +9,9 @@ var serverPort = (process.env.OPENSHIFT_INTERNAL_PORT || 8080);
 var host = (process.env.OPENSHIFT_INTERNAL_IP || '0.0.0.0');
 
 var app = express();
-app.post("/",handler);
 app.configure(function(){
 	app.use('/',express.static(__dirname+'/public'));
+	app.post('/',handler); //this is for facebook post requests
 });
 
 var server = http.createServer(app);
@@ -109,7 +109,10 @@ io.sockets.on('connection',function(socket){
 			var boardStatus = checkWin(boardObj);
 			if(boardStatus != '')
 			{
-				var winner = data[boardStatus];
+				if(boardStatus == 'draw')
+					var winner = 'No One';
+				else
+					var winner = data[boardStatus];
 				Sockets[data.positive].emit('win',winner);
 				Sockets[data.negative].emit('win',winner);
 				Boards[data.positive][data.negative]=null;
@@ -174,6 +177,7 @@ function printBoard(boardObj)
 //checks the winning conditions each time
 function checkWin(boardObj)
 {
+	var drawFlag = false;
 	for(var i=0;i<4;i++)
 	{
 		if(boardObj[0][i] == 3 || boardObj[i][0]==3 || boardObj[0][4] == 3)
@@ -185,6 +189,11 @@ function checkWin(boardObj)
 		{
 			console.log('Negative Wins!');
 			return 'negative';
+		}
+		else if((board[0][i] == 1 || board[0][i] == -1) && (board[i][0] == 1 || board[i][0] == -1) && (boardObj[0][4] == 1 || boardObj[0][4] == -1))
+		{
+			console.log('Its a Draw!');
+			return 'draw';
 		}
 	}
 	return '';
