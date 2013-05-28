@@ -2,11 +2,11 @@
 <head>
 	<title>TicTacToe - Mabbu9</title>
 	<!-- Change the script location for the server you are deploying to -->
-	<script src="http://localhost:8000/socket.io/socket.io.js"></script>
+	<script src="http://localhost:8080/socket.io/socket.io.js"></script>
 	<link rel="stylesheet" type="text/css" href="./css/style.css">
 	<script>
 	//Change the address here for the server you are deploying to
-	var socket = io.connect('http://localhost:8000');
+	var socket = io.connect('http://localhost:8080');
 	socket.on('connect',function(){
 		console.log('Connect Event Triggered');
 		document.getElementById('loading').style.display = 'none';
