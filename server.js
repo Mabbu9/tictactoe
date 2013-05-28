@@ -5,18 +5,24 @@ var socketio = require('socket.io');
 var fs = require('fs');
 var express = require('express');
 
-var app = http.createServer(handler);
-var io = socketio.listen(app);
-app.listen(8000);
+var serverPort = (process.env.OPENSHIFT_INTERNAL_PORT || 8080);
+var host = (process.env.OPENSHIFT_INTERNAL_IP || '0.0.0.0');
 
-var filePort = (process.env.OPENSHIFT_INTERNAL_PORT || 8080);
-var app2 = express();
-//app2.get("/",handler);
-app2.post("/",handler);
-app2.configure(function(){
-	app2.use('/',express.static(__dirname+'/public'));
+var app = express();
+app.post("/",handler);
+app.configure(function(){
+	app.use('/',express.static(__dirname+'/public'));
 });
-app2.listen(filePort);
+
+var server = http.createServer(app);
+
+var io = socketio.listen(server);
+io.configure(function(){
+    io.set("transports", ["websocket"]);
+});
+
+server.listen(serverPort,host);
+
 function handler(req, res)
 {
 	fs.readFile(__dirname+'/public/index.html',function(err, data){
