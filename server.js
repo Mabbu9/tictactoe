@@ -5,19 +5,24 @@ var socketio = require('socket.io');
 var fs = require('fs');
 var express = require('express');
 
-var app = http.createServer(handler);
-var io = socketio.listen(app);
-app.listen(8000);
+var serverPort = (process.env.OPENSHIFT_INTERNAL_PORT || 8080);
+var host = (process.env.OPENSHIFT_INTERNAL_IP || '0.0.0.0');
 
-var filePort = (process.env.OPENSHIFT_INTERNAL_PORT || 8080);
-var app2 = express();
-//app2.get("/",handler);
-app2.post("/",handler);
-app2.configure(function(){
-	app2.use('/',express.static(__dirname+'/public'));
+var app = express();
+app.configure(function(){
+	app.use('/',express.static(__dirname+'/public'));
+	app.post('/',handler); //this is for facebook post requests
 });
 
-app2.listen(filePort);
+var server = http.createServer(app);
+
+var io = socketio.listen(server);
+io.configure(function(){
+    io.set("transports", ["websocket"]);
+});
+
+server.listen(serverPort,host);
+
 function handler(req, res)
 {
 	fs.readFile(__dirname+'/public/index.html',function(err, data){
@@ -104,7 +109,10 @@ io.sockets.on('connection',function(socket){
 			var boardStatus = checkWin(boardObj);
 			if(boardStatus != '')
 			{
-				var winner = data[boardStatus];
+				if(boardStatus == 'draw')
+					var winner = 'No One';
+				else
+					var winner = data[boardStatus];
 				Sockets[data.positive].emit('win',winner);
 				Sockets[data.negative].emit('win',winner);
 				Boards[data.positive][data.negative]=null;
@@ -169,6 +177,7 @@ function printBoard(boardObj)
 //checks the winning conditions each time
 function checkWin(boardObj)
 {
+	var drawFlag = false;
 	for(var i=0;i<4;i++)
 	{
 		if(boardObj[0][i] == 3 || boardObj[i][0]==3 || boardObj[0][4] == 3)
@@ -180,6 +189,11 @@ function checkWin(boardObj)
 		{
 			console.log('Negative Wins!');
 			return 'negative';
+		}
+		else if((board[0][i] == 1 || board[0][i] == -1) && (board[i][0] == 1 || board[i][0] == -1) && (boardObj[0][4] == 1 || boardObj[0][4] == -1))
+		{
+			console.log('Its a Draw!');
+			return 'draw';
 		}
 	}
 	return '';
