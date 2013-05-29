@@ -200,6 +200,16 @@
       // The same caveats as above apply to the FB.login() call here.
       FB.login();
     }
+	FB.login(function(response) {
+   if (response.authResponse) {
+     console.log('Welcome!  Fetching your information.... ');
+     FB.api('/me', function(response) {
+       console.log('Good to see you, ' + response.name + '.');
+     });
+   } else {
+     console.log('User cancelled login or did not fully authorize.');
+   }
+ });
   });
   };
 
@@ -232,7 +242,7 @@
 	</div>
 	<div id="login" style="display:none;">
 		<input type="text" id="name" placeholder="Enter Your Name" /><br />
-		<button id="loginButton" onclick="testAPI()">Login</button>
+		<button id="loginButton" onclick="FB.login()">Login</button>
 	</div>
 	
 	<div id="game" style="display:none;">
