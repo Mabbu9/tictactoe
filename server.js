@@ -30,8 +30,9 @@ function handler(req, res)
 			res.writeHead(500);
 			return res.end('Error loading index.html');
 		}
-		res.writeHead(200);
-		res.end(data);
+		res.writeHead(200, {'Content-Type':'text/html'});
+		res.write(data);
+		res.end();
 	});
 }
 
