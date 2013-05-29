@@ -6,7 +6,7 @@ body
 {
 	width: 230px;
 	text-align: center;
-	margin: 250 auto;
+	margin: 250px auto;
 }
 #game
 {
@@ -19,6 +19,6 @@ body
 }
 .cell
 {
-	height : 100;
-	width :100;
+	height : 100px;
+	width :100px;
 }
