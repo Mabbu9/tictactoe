@@ -8,6 +8,7 @@
 	<script>
 	//Change the address here for the server you are deploying to
 	var socket = io.connect('//tic-mabbuquest.rhcloud.com:8000/');
+	var logged = false;
 	socket.on('connect',function(){
 		console.log('Connect Event Triggered');
 		document.getElementById('loading').style.display = 'none';
@@ -109,17 +110,21 @@
 			document.getElementById('statusMsg').innerHTML = 'Its the Other Players Turn!';
 		}
 	}
-	function login()
+	function login(name)
 	{
-		console.log('login function invoked');
-		name = document.getElementById('name').value;
-		if(name == '') document.getElementById('statusMsg').innerHTML = 'Enter a Valid Name';
-		else
+		if(logged == false)
 		{
-			socket.emit('login',name);
-			document.getElementById('statusMsg').innerHTML = '';
-			document.getElementById('loadingStatus').innerHTML = 'Logging in ...';
-			document.getElementById('loading').style.display = 'block';
+			logged=true;
+			console.log('login function invoked');
+			//name = document.getElementById('name').value;
+			if(name == '') document.getElementById('statusMsg').innerHTML = 'Enter a Valid Name';
+			else
+			{
+				socket.emit('login',name);
+				document.getElementById('statusMsg').innerHTML = '';
+				document.getElementById('loadingStatus').innerHTML = 'Logging in ...';
+				document.getElementById('loading').style.display = 'block';
+			}
 		}
 	}
 	function getList()
@@ -228,6 +233,7 @@
     console.log('Welcome!  Fetching your information.... ');
     FB.api('/me', function(response) {
       console.log('Good to see you, ' + response.name + '.');
+	  login(response.name);
     });
   }
 </script>
@@ -241,8 +247,8 @@
 	<img src="./images/loading.gif"></img>
 	</div>
 	<div id="login" style="display:none;">
-		<input type="text" id="name" placeholder="Enter Your Name" /><br />
-		<button id="loginButton" onclick="FB.login()">Login</button>
+		<!--<input type="text" id="name" placeholder="Enter Your Name" /><br />-->
+		<button id="loginButton" onclick="FB.login()">Play</button>
 	</div>
 	
 	<div id="game" style="display:none;">
