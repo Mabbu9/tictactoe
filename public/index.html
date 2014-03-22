@@ -111,10 +111,12 @@
 			document.getElementById('statusMsg').innerHTML = 'Its the Other Players Turn!';
 		}
 	}
-	function login(name)
+	function login(lname)
 	{
-		if(name=='')
+		if(lname=='')
 			alert('Enter a valid name');
+		else
+			name = lname;
 		if(logged == false)
 		{
 			logged=true;
