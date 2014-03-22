@@ -7,7 +7,8 @@
 	<link rel="stylesheet" type="text/css" href="./css/style.css">
 	<script>
 	//Change the address here for the server you are deploying to
-	var socket = io.connect('//tic-mabbuquest.rhcloud.com:8000/');
+	//var socket = io.connect('//tic-mabbuquest.rhcloud.com:8000/');
+	var socket = io.connect(window.location.hostname);
 	var logged = false;
 	socket.on('connect',function(){
 		console.log('Connect Event Triggered');
